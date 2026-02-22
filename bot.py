@@ -118,7 +118,7 @@ def handle_comment(message):
         
         bot.send_chat_action(message.chat.id, 'typing')
         
-        reply = get_politician_response(message.text)
+        reply = get_politician_response(message.text or message.caption)
         
         if not reply or len(reply.strip()) == 0:
             reply = "Всё, я устала. Пока."
