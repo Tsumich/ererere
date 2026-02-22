@@ -1,4 +1,5 @@
 import threading
+import time
 
 from flask import Flask
 import telebot
@@ -16,9 +17,9 @@ DISCUSSION_CHAT_ID = int(os.getenv("DISCUSSION_CHAT_ID"))
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route('/ping')
 def home():
-    return "Бот-политолог работает! 🤓☕️"
+    return "pong"
 
 def run_flask():
     port = int(os.environ.get('PORT', 8080))
