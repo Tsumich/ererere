@@ -108,7 +108,7 @@ def get_politician_response(user_message):
         print(f"🔥 Ошибка: {e}")
         return random.choice(FALLBACK_PHRASES)
 
-elite = [2074919463, 136817688, 1087968824, 534645597]
+elite = [2074919463, 136817688, 1087968824, 534645597, 777000]
 
 @bot.message_handler(func=lambda message: True)
 def handle_comment(message):
