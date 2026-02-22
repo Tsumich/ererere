@@ -1,3 +1,6 @@
+import threading
+
+from flask import Flask
 import telebot
 import requests
 import json
@@ -9,7 +12,23 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-DISCUSSION_CHAT_ID = os.getenv("DISCUSSION_CHAT_ID")
+DISCUSSION_CHAT_ID = int(os.getenv("DISCUSSION_CHAT_ID"))
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Бот-политолог работает! 🤓☕️"
+
+def run_flask():
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+
+# Запускаем Flask в фоне
+flask_thread = threading.Thread(target=run_flask, daemon=True)
+flask_thread.start()
+print("🌐 Веб-сервер запущен на порту", os.environ.get('PORT', 8080))
+
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -88,29 +107,31 @@ def get_politician_response(user_message):
         print(f"🔥 Ошибка: {e}")
         return random.choice(FALLBACK_PHRASES)
 
-elite = [2074919463,136817688, 534645597]
+elite = [2074919463, 136817688, 1087968824, 534645597]
 
 @bot.message_handler(func=lambda message: True)
 def handle_comment(message):
-    # Проверяем, что сообщение из нашего чата И от нужного пользователя
+ 
     if message.chat.id == DISCUSSION_CHAT_ID and message.from_user.id in elite :
         print(f"👤 {message.from_user.first_name}: {message.text}")
         
-        # Показываем что бот печатает
         bot.send_chat_action(message.chat.id, 'typing')
         
-        # Получаем ответ от нейросети
         reply = get_politician_response(message.text)
         
-        # Финальная проверка (на всякий случай)
         if not reply or len(reply.strip()) == 0:
             reply = "Всё, я устала. Пока."
         
-        # Отправляем ответ
         bot.reply_to(message, reply)
         print(f"🤖 Бот: {reply}")
     else:
         print(f"🚫 Игнорирую сообщение от {message.from_user.id}")
 
 print("🎓 Бот-студентка запущен! Жду комментарии...")
-bot.polling(none_stop=True)
+
+while True:
+    try:
+        bot.infinity_polling(timeout=10, long_polling_timeout=5)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        time.sleep(5)
