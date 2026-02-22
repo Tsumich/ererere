@@ -109,16 +109,16 @@ def get_politician_response(user_message):
         return random.choice(FALLBACK_PHRASES)
 
 elite = [2074919463, 136817688, 1087968824, 534645597, 777000]
+chats = [1002610474557, DISCUSSION_CHAT_ID]
 
-@bot.message_handler(func=lambda message: True)
+@bot.message_handler(func=lambda message: True, content_types=['photo','text']) 
 def handle_comment(message):
- 
-    if message.chat.id == DISCUSSION_CHAT_ID and message.from_user.id in elite :
+    if message.chat.id in chats and message.from_user.id in elite :
         print(f"👤 {message.from_user.first_name}: {message.text}")
         
         bot.send_chat_action(message.chat.id, 'typing')
-        
-        reply = get_politician_response(message.text or message.caption)
+        print(message)
+        reply = get_politician_response(message.caption or message.text)
         
         if not reply or len(reply.strip()) == 0:
             reply = "Всё, я устала. Пока."
