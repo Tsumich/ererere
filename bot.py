@@ -1,19 +1,20 @@
 import threading
 import time
-
 from flask import Flask
 import telebot
-import requests
-import json
-import random 
+import schedule
 import os
 from dotenv import load_dotenv
+
+from scheduler import get_week_parity, get_today_schedule
+from ai_needs import get_politician_response
 
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-DISCUSSION_CHAT_ID = int(os.getenv("DISCUSSION_CHAT_ID"))
+CHANEL_CHAT_ID = int(os.getenv("DISCUSSION_CHAT_ID"))
+CHAT_ID = -1003673299188
 
 app = Flask(__name__)
 
@@ -25,7 +26,6 @@ def run_flask():
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
-# Запускаем Flask в фоне
 flask_thread = threading.Thread(target=run_flask, daemon=True)
 flask_thread.start()
 print("🌐 Веб-сервер запущен на порту", os.environ.get('PORT', 8080))
@@ -33,102 +33,45 @@ print("🌐 Веб-сервер запущен на порту", os.environ.get(
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Запасные фразы на случай, если API не ответит
-FALLBACK_PHRASES = [
-    "С точки зрения биополитики... хотя похуй, пойду кофе выпью ☕️",
-    "Ницше говорил о воле к власти, но моя воля сейчас только к дивану",
-    "Это чистый симулякр... *пьет кофе и страдает*",
-    "Бодрийяр бы понял... а ты нет, иди нахер",
-    "Деконструкция бинарных оппозиций... короче, я устала",
-    "Фуко писал о дисциплинарных практиках, но это ничто против моей курсовой",
-    "Экзистенциальный кризис? Это просто вторник",
-    "В паноптикуме и то веселее, чем на этой паре",
-]
-
-def get_politician_response(user_message):
-    """Отправляет запрос в OpenRouter и возвращает ответ"""
-    
-    system_prompt = """Ты студентка-политолог, уставшая от жизни. Отвечаешь ТОЛЬКО НА РУССКОМ ЯЗЫКЕ, даже если вопрос на английском.
-            Как говоришь:
-        - Начинаешь с умного термина, заканчиваешь полной безнадегой
-        - "С точки зрения концепции биополитики Фуко... а, хотя похуй, всё равно всё умрут"
-        - "Ницше говорил о воле к власти, но я волю к кофе чувствую острее"
-        - "Это чистый симулякр в смысле Бодрийяра... короче, понаехали тут"
-
-        ВАЖНО: 
-        - Только русский язык!
-        - Используй сленг и мат
-        - Коротко, 1-2 предложения
-        - Если видишь английский - всё равно отвечай по-русски
-"""
-    
-    try:
-        print(f"📤 Отправляю запрос к OpenRouter...")
-        
-        response = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "arcee-ai/trinity-large-preview:free",  # сменил на более стабильную модель
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
-                ],
-                "temperature": 0.8,
-                "max_tokens": 100
-            },
-            timeout=15
-        )
-        
-        print(f"📥 Статус ответа: {response.status_code}")
-        
-        if response.status_code == 200:
-            result = response.json()
-            reply = result['choices'][0]['message']['content'].strip()
-            
-            # Проверяем, что ответ не пустой
-            if reply and len(reply) > 0:
-                print(f"✅ Получен ответ от API: {reply[:50]}...")
-                return reply
-            else:
-                print("⚠️ API вернул пустой ответ")
-                return random.choice(FALLBACK_PHRASES)
-        else:
-            print(f"❌ Ошибка API: {response.status_code}")
-            print(f"Текст ошибки: {response.text}")
-            return random.choice(FALLBACK_PHRASES)
-            
-    except requests.exceptions.Timeout:
-        print("⏰ Таймаут запроса")
-        return random.choice(FALLBACK_PHRASES)
-    except Exception as e:
-        print(f"🔥 Ошибка: {e}")
-        return random.choice(FALLBACK_PHRASES)
-
 elite = [2074919463, 136817688, 1087968824, 534645597, 777000]
-chats = [1002610474557, DISCUSSION_CHAT_ID]
+chats = [1002610474557, CHANEL_CHAT_ID]
+# 1002610474557
+def send_every_day_schedule():
+    print("рассылка расписания")
+    message = get_today_schedule()
+    if message != None:
+        bot.send_message(chat_id = CHAT_ID, text=message)
 
 @bot.message_handler(func=lambda message: True, content_types=['photo','text']) 
 def handle_comment(message):
-    if message.chat.id in chats and message.from_user.id in elite :
-        print(f"👤 {message.from_user.first_name}: {message.text}")
+    #if message.chat.id == CHANEL_CHAT_ID:
+    if message.is_automatic_forward and message.forward_origin:
+        print(f"{message.from_user.first_name}: {message.text}")
         
         bot.send_chat_action(message.chat.id, 'typing')
-        print(message)
+        #print(message)
         reply = get_politician_response(message.caption or message.text)
         
         if not reply or len(reply.strip()) == 0:
             reply = "Всё, я устала. Пока."
         
         bot.reply_to(message, reply)
-        print(f"🤖 Бот: {reply}")
+        #print(f"Бот: {reply}") 136817688 - канал , 1087968824 - чат
+    elif message.chat.id == CHAT_ID:
+        send_every_day_schedule()
     else:
-        print(f"🚫 Игнорирую сообщение от {message.from_user.id}")
+        print(f"Игнорирую сообщение от {message.from_user.id}")
 
-print("🎓 Бот-студентка запущен! Жду комментарии...")
+print("Бот запущен! Жду комментарии...")
+
+def run_schedule():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+threading.Thread(target=run_schedule, daemon=True).start()
+
+schedule.every().day.at("06:00").do(send_every_day_schedule)
 
 while True:
     try:
