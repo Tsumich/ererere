@@ -16,7 +16,7 @@ def get_week_parity():
         return 0
 
 def get_today_schedule():
-    EVEN_WEEK = get_week_parity
+    EVEN_WEEK = get_week_parity()
     today = datetime.now()
     weekday = today.weekday()
 

@@ -71,7 +71,7 @@ def run_schedule():
 
 threading.Thread(target=run_schedule, daemon=True).start()
 
-schedule.every().day.at("06:00").do(send_every_day_schedule)
+schedule.every().day.at("23:00").do(send_every_day_schedule)
 
 while True:
     try:
