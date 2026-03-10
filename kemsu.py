@@ -8,6 +8,7 @@ load_dotenv()
 
 def request_to_kemsu():
     session = requests.Session()
+    session.timeout = (10, 30) 
     user = fake_useragent.UserAgent().random
 
     auth_url = "https://api2.kemsu.ru/api/auth"

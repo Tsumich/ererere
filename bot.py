@@ -40,8 +40,12 @@ def send_every_day_schedule():
         bot.send_message(chat_id = CHAT_ID, text=message)
 
 def send_subject_stat():
-    message = request_to_kemsu()
-    bot.send_message(chat_id = CHAT_ID, text=message)
+    try:
+        message = request_to_kemsu()
+        if message and len(message.strip()) > 0:
+            bot.send_message(chat_id=CHAT_ID, text=message)
+    except Exception as e:
+        bot.send_message(chat_id=CHAT_ID, text=str(e))
 
 @bot.message_handler(func=lambda message: True, content_types=['photo','text']) 
 def handle_comment(message):
