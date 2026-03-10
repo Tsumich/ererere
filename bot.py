@@ -40,10 +40,7 @@ def send_every_day_schedule():
         bot.send_message(chat_id = CHAT_ID, text=message)
 
 def send_subject_stat():
-    array = request_to_kemsu()
-    message = ""
-    for i in range(len(array)):
-        message += array[i]
+    message = request_to_kemsu()
     bot.send_message(chat_id = CHAT_ID, text=message)
 
 @bot.message_handler(func=lambda message: True, content_types=['photo','text']) 

@@ -77,7 +77,6 @@ def request_to_kemsu():
     print("Сбор данных о пользовале: ", userId)
 
     subject_link = "https://xiais.kemsu.ru/proc/stud/index.shtm"
-    css_link = f'https://xiais.kemsu.ru/proc/css.css?userId={userId}'
 
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -99,14 +98,17 @@ def request_to_kemsu():
     }
 
     response = session.post(subject_link, headers=headers, data = 'studyYear=2025-2026')
+    if response.status_code != 200:
+        error_messages = {
+            401: "Авторизация протухла, надо перезайти",
+            403: "Доступа нет, видимо кемсу меня забанил",
+            404: "Страница с оценками не найдена",
+            500: "У кемсу сервер упал, ну бывает",
+            502: "Шлюз кемсу сломался, перегрузка видимо",
+            503: "Кемсу лежит, обслуживание"
+        }
+        return error_messages.get(response.status_code, f"Ошибка {response.status_code}, сам хз что случилось")
 
-    css_header = {
-        'Referer': 'https://xiais.kemsu.ru/proc/stud/index.shtm',
-        'User-Agent': user,
-    }
-    session.get(css_link, headers=headers)
-
-    file_write = open('output.html', 'w')
     soup = BeautifulSoup(response.text, 'html.parser')
 
     tables = soup.find_all('table', recursive=True)
@@ -122,7 +124,7 @@ def request_to_kemsu():
         subject_title = subject_title.strip()
         amout = amout.strip()
             
-        message += subject_title +" — " + amout +"\n\n"
+        message += subject_title +" : " + amout +"\n\n"
     return message
 
 
