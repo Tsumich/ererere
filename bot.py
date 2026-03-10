@@ -6,8 +6,9 @@ import schedule
 import os
 from dotenv import load_dotenv
 
-from scheduler import get_week_parity, get_today_schedule
+from scheduler import get_today_schedule
 from ai_needs import get_politician_response
+from kemsu import request_to_kemsu
 
 load_dotenv()
 
@@ -28,37 +29,42 @@ def run_flask():
 
 flask_thread = threading.Thread(target=run_flask, daemon=True)
 flask_thread.start()
-print("🌐 Веб-сервер запущен на порту", os.environ.get('PORT', 8080))
-
+print("Веб-сервер запущен на порту", os.environ.get('PORT', 8080))
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-elite = [2074919463, 136817688, 1087968824, 534645597, 777000]
-chats = [1002610474557, CHANEL_CHAT_ID]
-# 1002610474557
 def send_every_day_schedule():
     print("рассылка расписания")
     message = get_today_schedule()
     if message != None:
         bot.send_message(chat_id = CHAT_ID, text=message)
 
+def send_subject_stat():
+    array = request_to_kemsu()
+    message = ""
+    for i in range(len(array)):
+        message += array[i]
+    bot.send_message(chat_id = CHAT_ID, text=message)
+
 @bot.message_handler(func=lambda message: True, content_types=['photo','text']) 
 def handle_comment(message):
-    #if message.chat.id == CHANEL_CHAT_ID:
     if message.is_automatic_forward and message.forward_origin:
         print(f"{message.from_user.first_name}: {message.text}")
-        
+        text_to_respond = message.caption or message.text
+        if not text_to_respond or len(text_to_respond.strip()) == 0:
+            print("Пустая подпись - игнорирую")
+            return 
         bot.send_chat_action(message.chat.id, 'typing')
-        #print(message)
         reply = get_politician_response(message.caption or message.text)
         
         if not reply or len(reply.strip()) == 0:
             reply = "Всё, я устала. Пока."
         
         bot.reply_to(message, reply)
-        #print(f"Бот: {reply}") 136817688 - канал , 1087968824 - чат
-    elif message.chat.id == CHAT_ID:
+    elif message.chat.id == CHAT_ID and "расписание" in message.text:
         send_every_day_schedule()
+    elif message.chat.id == CHAT_ID and "оценки" in message.text:
+        send_subject_stat()
     else:
         print(f"Игнорирую сообщение от {message.from_user.id}")
 
@@ -71,7 +77,7 @@ def run_schedule():
 
 threading.Thread(target=run_schedule, daemon=True).start()
 
-schedule.every().day.at("23:00").do(send_every_day_schedule)
+schedule.every().day.at("00:00").do(send_every_day_schedule)
 
 while True:
     try:

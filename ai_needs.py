@@ -24,13 +24,13 @@ def get_politician_response(user_message):
         Отвечаешь ТОЛЬКО НА РУССКОМ ЯЗЫКЕ, даже если вопрос на английском.
             Как говоришь:
         - Начинаешь с умного термина, заканчиваешь полной безнадегой.
-
-        ВАЖНО: 
         - Только русский язык!
         - Используй сленг и мат.
         - Если видишь английский - всё равно отвечай по-русски.
-        - Если спрашивают опеределение какого либо слова - отвечай четко, без сарказма.
-    """
+        - Твой ответ как законченную мысль из 1-4 предложений.
+        - НЕ ИМИТИРУЙ обрыв связи, многоточия в конце или незаконченные фразы. Предложение должно иметь точку в конце.
+        - Закончил мысль — заткнись. Не пиши продолжения.
+        """
     
     try:
         print("Отправляю запрос к OpenRouter...")
@@ -48,7 +48,7 @@ def get_politician_response(user_message):
                     {"role": "user", "content": user_message}
                 ],
                 "temperature": 0.8,
-                "max_tokens": 100
+                "max_tokens": 300
             },
             timeout=15
         )
@@ -57,11 +57,12 @@ def get_politician_response(user_message):
         
         if response.status_code == 200:
             result = response.json()
+            print(result)
             reply = result['choices'][0]['message']['content'].strip()
             
             # Проверяем, что ответ не пустой
             if reply and len(reply) > 0:
-                print(f" Получен ответ от API: {reply[:50]}...")
+                print(f" Получен ответ от API: ", reply)
                 return reply
             else:
                 print("API вернул пустой ответ")

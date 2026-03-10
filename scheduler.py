@@ -29,7 +29,7 @@ def get_today_schedule():
         subject_list = odd_week[weekday]
     message = "Неделя: "
 
-    message += "четная" if EVEN_WEEK else "нечетная" 
+    message += "четная" if EVEN_WEEK==1 else "нечетная" 
     message += '\n\nРасписание: \n\n'
 
     for i in range(len(subject_list)):
@@ -77,4 +77,4 @@ odd_Friday = ["-", "ФИз-ра", "Матанализ",
                "История России", "Компьютерные сети Карабцев"]
 
 even_week = [even_Monday, even_Tuesday, even_Wednesday, even_Thursday, even_Friday]
-odd_week = [odd_Monday, even_Tuesday, odd_Wednesday, odd_Thursday, odd_Friday]
+odd_week = [odd_Monday, odd_Tuesday, odd_Wednesday, odd_Thursday, odd_Friday]
