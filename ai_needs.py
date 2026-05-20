@@ -42,7 +42,7 @@ def get_politician_response(user_message):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "arcee-ai/trinity-large-preview:free", 
+                "model": "openrouter/owl-alpha", 
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
